@@ -92,7 +92,7 @@ class Loadcsv_vispy(object):
     def load_groundtruth(self,sorted_file, data_dir, tsf):
         
         #NB: Ensure that 3 decimal places spiketimes (i.e. ms precision) is sufficient
-        fname = data_dir+sorted_file+'/'+sorted_file
+        fname = data_dir+sorted_file
         f = open(fname+'_ground_truth.csv', "r")
         data_file = np.genfromtxt(f, delimiter=',', dtype=np.float32) #, usecols=(0,))
         f.close()
