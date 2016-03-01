@@ -83,17 +83,72 @@ class Tsf_file(object):
             self.maxchan.append(out_array[1][i][0])
 
 
-class Loadgdf(object):
+class Loadcsv_vispy(object):
     """Ground truth file - Espen, Torbjorn, Gaute Vispy data"""
-    def __init__(self, sorted_file, data_dir):
+    def __init__(self, sorted_file, data_dir, tsf):
     
-        self.load_groundtruth()
+        self.load_groundtruth(sorted_file, data_dir, tsf)
     
-    def load_groundtruth(sorted_file, data_dir):
+    def load_groundtruth(self,sorted_file, data_dir, tsf):
         
-        data = np.loadtxt(data_dir+sorted_file+'/'+sorted_file+'.gdf')
+        #NB: Ensure that 3 decimal places spiketimes (i.e. ms precision) is sufficient
+        fname = data_dir+sorted_file+'/'+sorted_file
+        f = open(fname+'_ground_truth.csv', "r")
+        data_file = np.genfromtxt(f, delimiter=',', dtype=np.float32) #, usecols=(0,))
+        f.close()
         
+        #randomized_filename = fname.replace('/home/catubc/webapps/my_django_app/myproject/media/uploads/','')
+        #temp_file = '/home/catubc/webapps/my_django_app/myproject/media/saved_uploads/'+work_dir+randomized_filename
+        #np.savetxt(temp_file, data_file)
+
+        #Load spiketimes from first column
+        spiketimes=data_file[:,0]
+        spiketimes= np.array(spiketimes*tsf.SampleFrequency, dtype=np.float32) #Convert spiketimes to timesteps
+
+        #Load unit ids from second column
+        spike_id=np.array(data_file[:,1],dtype=np.int32)
+
+        #NB: Extra steps needed for assigning map KK discountinuos unit ids onto 0 based sequential ids
+        unique_ids = np.unique(spike_id)
+
+        #print "Parsing Dan .csv file -> assigning to units"
+        self.units=[]
+        for i in range(len(unique_ids)):
+            self.units.append([])
+
+        for i in range(len(spiketimes)):
+            self.units[np.where(unique_ids==spike_id[i])[0][0]].append(spiketimes[i])
+        self.n_units=len(self.units)
+
+        self.size=np.zeros((self.n_units), dtype=np.float32)
+        for i in range(len(self.units)):
+            self.size[i]=len(self.units[i])
+        #print "No. of units in .csv: ", self.n_units
+
+        if True:  #Set this to false for now; do not load .tsf file
+            if (os.path.exists(fname[0:-4]+'_ptps.csv')==False):
+                #Compute PTP values from original .tsf file; needed for .csv sorted files
+                print "Manually recomputing each unit ptp and max channel values"
+                self.ptp=np.zeros((self.n_units), dtype=np.float32)
+                self.size=np.zeros((self.n_units), dtype=np.float32)
+                for i in range(self.n_units):
+                    self.size[i]=len(self.units[i])
+
+                #Use fortran to compute PTP very quickly
+                tsf.compute_ptp(self.units, tsf.n_electrodes, tsf.ec_traces, tsf.vscale_HP)
+                self.ptp=tsf.ptp
+                self.maxchan=tsf.maxchan
+            else:
+                self.ptp = np.loadtxt(fname[:-4]+'_ptps.csv', dtype=np.float32, delimiter=",")
+                self.maxchan = np.loadtxt(fname[:-4]+'_maxch.csv', dtype=np.int32, delimiter=",")
+                self.size = np.loadtxt(fname[:-4]+'_size.csv', dtype=np.int32, delimiter=",")
+
+        self.n_sorted_spikes = [None]*self.n_units
+        for k in range(self.n_units):
+            self.n_sorted_spikes[k] = len(self.units[k])
         
+
+
 
 class Loadptcs(object):
     """Polytrode clustered spikes file neuron record"""
@@ -386,7 +441,6 @@ def Plot_Composite_metrics(data_dir, sorted_file, sorted_dir, Sort2):
     '''
     colors=['green','blue','violet','cyan','violet','mediumvioletred','indianred','lightsalmon','pink','darkolivegreen']
 
-    
     purity=np.array(Sort2.purity)
     completeness = np.array(Sort2.completeness)
     ptp = np.array(Sort2.ptp)

@@ -320,10 +320,10 @@ def plotResult(request, sorted_dir, truth_file):
         Sort1.directory=data_dir
         Sort1.data_dir = data_dir
     #Vispy biophys simulations; have own .gdf spike time format.
-    elif (sorted_file == "silico_100"):
-        Sort1 = dirk_2.Loadgdf(sorted_file, data_dir)
+    elif (sorted_file == "ViSAPy_0"):
+        Sort1 = dirk_2.Loadcsv_vispy(sorted_file, data_dir, tsf)
+        #file_name = '/media/cat/12TB/spikesortingtest.com/espen/ViSAPy_ground_truth.gdf'
         
-
     ##************** READ 2ND SORT DATA **********
     fname_save = sorted_dir
     Sort2 = dirk_2.Loadcsv(sorted_dir, tsf, sorted_file + '/')

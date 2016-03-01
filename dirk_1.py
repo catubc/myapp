@@ -8,11 +8,11 @@ anonymous = True
 
 #sorted_dirs = [ 'cat_sort/', 'nicksw_sort_pp1/', 'dan_sort/','james_sort/', 'nickst_sort/', 'pierre_sort/', 'martin_sort/']
 sorted_dirs = [ 'test_sort/']
-sorted_file = 'silico_100'
+sorted_file = 'ViSAPy_0'
 
 #********************* READ TSF FILES *******************
 tsf_name = data_dir + '/'+ sorted_file + '_truth_filtered'
-if False:  #Set to false, do not load .tsf file data
+if True:  #Set to false, do not load .tsf file data
     f = open(sim_dir + tsf_name + '.tsf', "rb")
     print "Loading ", sim_dir + tsf_name + '.tsf'
     tsf = Tsf_file(f, sim_dir)  #Auto load tsf file attributes: n_electrodes, ec_traces, SampleFreqeuncy and others
@@ -24,7 +24,7 @@ if False:  #Set to false, do not load .tsf file data
 
 ptcs_flag = 1
 
-if True:
+if 'silico' in sorted_file:
     Sort1 = Loadptcs(sorted_file+'_truth_filtered', sim_dir+data_dir, ptcs_flag, save_timestamps=False)
     Sort1.name=sorted_file+'_truth_filtered'
     Sort1.filename=sorted_file+'_truth_filtered'
@@ -32,6 +32,10 @@ if True:
     Sort1.directory=sim_dir+data_dir
     Sort1.sim_dir = sim_dir
     Sort1.data_dir = data_dir
+
+if 'ViSAPy' in sorted_file:
+    Sort1 = Loadcsv_vispy(sorted_file, data_dir, tsf)
+
 
 ##************** READ 2ND SORT DATA **********
 
